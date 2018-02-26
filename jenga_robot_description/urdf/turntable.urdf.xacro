@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:property name="M_SCALE" value="0.001"/>
+   <xacro:property name="FRAME_SCALE" value="0.0254"/>
+   <xacro:property name="M_PI" value="3.14159"/>
+
+   <xacro:include filename="$(find widowx_arm_description)/urdf/common_materials.xacro" />
+
+   <xacro:macro name="arm_turntable" params="parent prefix *origin">
+
+      <!-- links -->
+      <link name="${prefix}turntable_main_link">
+         <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+		<cylinder length="${FRAME_SCALE*1.25}" radius="${FRAME_SCALE*9}"/>
+            </geometry>
+            <xacro:material_black />
+             </visual>
+         <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+		<cylinder length="${FRAME_SCALE*1.25}" radius="${FRAME_SCALE*9}"/>
+            </geometry>
+         </collision>
+         <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+         </inertial>
+      </link>
+
+      <link name="${prefix}arm_mount_link">
+         <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+         </inertial>
+      </link>
+
+
+      <!-- joints -->
+      <joint name="${prefix}turntable_joint" type="revolute">
+         <xacro:insert_block name="origin" />
+         <parent link="${parent}" />
+         <child link="${prefix}turntable_main_link"/>
+         <axis xyz="0 0 1" />
+         <limit lower="${-M_PI/2}" upper="${M_PI/2}" effort="6" velocity="1.571" />
+      </joint>
+      <joint name="${prefix}arm_mount_joint" type="fixed">
+         <origin xyz="${FRAME_SCALE*4.5} 0 ${FRAME_SCALE*1.25}" rpy="0 0 0" />
+         <parent link="${prefix}turntable_main_link" />
+         <child link="${prefix}arm_mount_link" />
+      </joint>
+
+
+
+   </xacro:macro>
+
+</robot>

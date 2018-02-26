@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:property name="M_SCALE" value="0.001"/>
+   <xacro:property name="FRAME_SCALE" value="0.0254"/>
+   <xacro:property name="M_PI" value="3.14159"/>
+
+   <xacro:include filename="$(find widowx_arm_description)/urdf/common_materials.xacro" />
+
+   <xacro:macro name="jenga_frame" params="parent prefix *origin">
+
+      <!-- links -->
+      <link name="${prefix}frame_main_link">
+         <visual>
+            <origin xyz="${12*FRAME_SCALE} ${-53.5*FRAME_SCALE} 0" rpy="0 ${-90*M_PI/180.0} 0" />
+            <geometry>
+               <mesh filename="package://jenga_robot_description/meshes/frame.stl" scale="${FRAME_SCALE} ${FRAME_SCALE} ${FRAME_SCALE}"/>
+            </geometry>
+            <xacro:material_black />
+             </visual>
+         <collision>
+            <origin xyz="${12*FRAME_SCALE} ${-53.5*FRAME_SCALE} 0" rpy="0 ${-90*M_PI/180.0} 0" />
+            <geometry>
+               <mesh filename="package://jenga_robot_description/meshes/frame.stl"/>
+            </geometry>
+         </collision>
+         <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+         </inertial>
+      </link>
+
+      <link name="${prefix}frame_top_link">
+         <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1" />
+            <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+         </inertial>
+      </link>
+
+
+      <!-- joints -->
+      <joint name="${prefix}frame_base_joint" type="fixed">
+         <xacro:insert_block name="origin" />
+         <parent link="${parent}" />
+         <child link="${prefix}frame_main_link"/>
+      </joint>
+      <joint name="${prefix}frame_turntable_joint" type="fixed">
+         <origin xyz="0 0 ${FRAME_SCALE*34}" rpy="0 0 0" />
+         <parent link="${prefix}frame_main_link" />
+         <child link="${prefix}frame_top_link" />
+      </joint>
+
+
+
+   </xacro:macro>
+
+</robot>
