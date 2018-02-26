@@ -39,6 +39,7 @@
       </link>
 
 
+
       <!-- joints -->
       <joint name="${prefix}frame_base_joint" type="fixed">
          <xacro:insert_block name="origin" />
