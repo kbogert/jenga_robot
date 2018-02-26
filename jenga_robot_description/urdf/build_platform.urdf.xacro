@@ -38,6 +38,10 @@
          <child link="${prefix}build_platform_main_link"/>
       </joint>
 
+         <gazebo reference="${prefix}build_platform_main_link">
+                <selfCollide>true</selfCollide>
+         </gazebo>
+
    </xacro:macro>
 
 </robot>
