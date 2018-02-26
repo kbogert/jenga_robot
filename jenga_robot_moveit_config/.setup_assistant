@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: jenga_robot_description
+    relative_path: urdf/jenga_robot.urdf.xacro
+  SRDF:
+    relative_path: config/jenga_robot.srdf
+  CONFIG:
+    author_name: Kenneth Bogert
+    author_email: kbogert@unca.edu
+    generated_timestamp: 1519610444

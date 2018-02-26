@@ -45,7 +45,7 @@
          <parent link="${parent}" />
          <child link="${prefix}turntable_main_link"/>
          <axis xyz="0 0 1" />
-         <limit lower="${-M_PI/2}" upper="${M_PI/2}" effort="6" velocity="1.571" />
+         <limit lower="${-M_PI}" upper="${M_PI}" effort="6" velocity="1.571" />
       </joint>
       <joint name="${prefix}arm_mount_joint" type="fixed">
          <origin xyz="${FRAME_SCALE*4.5} 0 ${FRAME_SCALE*-1.25}" rpy="0 ${M_PI} 0" />
