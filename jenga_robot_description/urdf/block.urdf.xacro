@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="jenga_block" xmlns:xacro="http://ros.org/wiki/xacro">
+   <xacro:property name="M_SCALE" value="0.001"/>
+   <xacro:property name="FRAME_SCALE" value="0.0254"/>
+   <xacro:property name="M_PI" value="3.14159"/>
+
+   <xacro:include filename="$(find widowx_arm_description)/urdf/common_materials.xacro" />
+
+
+      <!-- links -->
+      <link name="jenga_block_link">
+         <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+		<box size="${M_SCALE*15} ${M_SCALE*25} ${M_SCALE*75}" />
+            </geometry>
+            <xacro:material_yellow />
+             </visual>
+         <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+		<box size="${M_SCALE*15} ${M_SCALE*25} ${M_SCALE*75}" />
+            </geometry>
+         </collision>
+         <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="0.0106875" />
+            <inertia ixx="0.000005566" ixy="0.0" ixz="0.0" iyy="0.00000521" iyz="0.0" izz="0.000000757" />
+         </inertial>
+      </link>
+
+
+</robot>

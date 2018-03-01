@@ -15,7 +15,7 @@
             <geometry>
 		<cylinder length="${FRAME_SCALE*1.25}" radius="${FRAME_SCALE*9}"/>
             </geometry>
-            <xacro:material_black />
+            <xacro:material_grey />
              </visual>
          <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
