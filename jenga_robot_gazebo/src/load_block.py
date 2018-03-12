@@ -22,7 +22,7 @@ def delete_all_blocks(delete_srv, blocks_list):
 
 def hasFallen(model_states, blocks_list):
 
-	if len(blocks_list < 3):
+	if len(blocks_list) < 3:
 		return False
 
 	# average the z-height of each block's position, if below half of the ideal block height, we've fallen
@@ -31,7 +31,7 @@ def hasFallen(model_states, blocks_list):
 	total_height = 0
 
 	for block in blocks_list:
-		total_height += model_states(block).pose.position.z - block_pose.z
+		total_height += model_states(block, "world").pose.position.z - block_pose.position.z
 		
 	avg_height = total_height / len(blocks_list)
 
@@ -43,7 +43,7 @@ def hasFallen(model_states, blocks_list):
 
 def getBlockPose(model_states, id):
 
-	return model_states(id).pose
+	return model_states(id, "world").pose
 
 if __name__=='__main__':
 
@@ -80,6 +80,9 @@ if __name__=='__main__':
 	block_pose.orientation.z = rospy.get_param('~orientation_z')
 	block_pose.orientation.w = rospy.get_param('~orientation_w')
 
+
+	block_urdf = rospy.get_param('~block_description')
+
 	blocks_list = []
 	block_num = 0
 	last_block_add_time = 0
@@ -91,9 +94,9 @@ if __name__=='__main__':
 		# Do we need to destroy all blocks?
 
 		if hasFallen(gazebo_model_states_srv, blocks_list):
-			deleteAllBlocks(gazebo_delete_model_srv, blocks_list)
+			delete_all_blocks(gazebo_delete_model_srv, blocks_list)
 			last_block_add_time = 0
-			blocks_list.clear()
+			blocks_list[:] = []
 			block_num = 0
 			block_waiting = False
 
@@ -118,15 +121,15 @@ if __name__=='__main__':
 			cur_block_pose = getBlockPose(gazebo_model_states_srv, "block" + str(block_num))
 			z_value = cur_block_pose.position.z
 
-			if z_value > block_pose.z + err:
+			if z_value > block_pose.position.z + err:
 				block_waiting = False
 				last_block_add_time = rospy.get_time()
 			else:
 
 				msg = PoseStamped()
 				
-				msg.header.seq = block_num
-				msg.header.stamp = rospy.time.now()
+#				msg.header.seq = block_num
+				msg.header.stamp = rospy.Time.now()
 
 				msg.pose = cur_block_pose
 
