@@ -38,10 +38,35 @@
          <child link="${prefix}build_platform_main_link"/>
       </joint>
 
+
          <gazebo reference="${prefix}build_platform_main_link">
                 <selfCollide>true</selfCollide>
+        <collision><surface>
+                <bounce><threshold>100000</threshold></bounce>
+        <friction>
+        <ode>
+                <mu>10000000</mu>
+                <mu2>10000000</mu2>
+                <slip1>0.0</slip1>
+                <slip2>0.0</slip2>
+        </ode>
+        <bullet>
+                <friction>10000000</friction>
+                <friction2>10000000</friction2>
+        </bullet>
+
+        </friction>
+
+        <contact>
+                <ode><kd>100</kd></ode>
+                <bullet><kp>1000000000</kp><kd>100</kd><soft_erp>0.20</soft_erp></bullet>
+
+        </contact>
+        </surface></collision>
+
          </gazebo>
 
-   </xacro:macro>
+    </xacro:macro>
+
 
 </robot>
