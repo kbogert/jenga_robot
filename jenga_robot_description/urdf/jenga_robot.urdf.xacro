@@ -11,7 +11,7 @@
 	<link name="world"/>
 
 	<xacro:jenga_frame parent="world" prefix="">
-		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+		<origin xyz="0.0 0.0 ${0.0254*0.25}" rpy="0.0 0.0 0.0"/>
 	</xacro:jenga_frame>
 
 
