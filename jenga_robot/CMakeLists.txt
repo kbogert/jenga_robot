@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 2.8.3)
 project(jenga_robot)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED  interactive_markers pcl_ros roscpp visualization_msgs arbotix_msgs moveit_core moveit_visual_tools  moveit_ros_perception pluginlib moveit_ros_planning_interface)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+#find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -99,11 +99,17 @@ find_package(catkin REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES jenga_robot
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+  #INCLUDE_DIRS include
+  #LIBRARIES jenga_robot
+  #CATKIN_DEPENDS other_catkin_pkg
+  DEPENDS system_lib
 )
+include_directories(include
+                    SYSTEM
+                    ${Boost_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
+                    ${PCL_INCLUDE_DIRS}
+                   )
 
 ###########
 ## Build ##
@@ -111,10 +117,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
-)
+
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
@@ -129,7 +132,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/jenga_robot_node.cpp)
+ add_executable(jenga_robot src/jenga_robot.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -142,9 +145,7 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+ target_link_libraries(jenga_robot ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #############
 ## Install ##
@@ -155,10 +156,7 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+ install(TARGETS jenga_robot DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
