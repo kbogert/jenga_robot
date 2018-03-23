@@ -7,7 +7,7 @@ project(jenga_robot)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED  interactive_markers pcl_ros roscpp visualization_msgs arbotix_msgs moveit_core moveit_visual_tools  moveit_ros_perception pluginlib moveit_ros_planning_interface)
+find_package(catkin REQUIRED  interactive_markers pcl_ros roscpp visualization_msgs arbotix_msgs moveit_core  moveit_ros_perception moveit_ros_planning_interface)
 
 ## System dependencies are found with CMake's conventions
 #find_package(Boost REQUIRED COMPONENTS system)

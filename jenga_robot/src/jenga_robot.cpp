@@ -13,10 +13,10 @@
 #include <geometry_msgs/PoseArray.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <pluginlib/class_loader.h>
+
 #include <boost/scoped_ptr.hpp>
 
-/*
+
 namespace widowx_block_manipulation
 {
 
@@ -301,7 +301,7 @@ public:
 
 };
 
-*/
+
 
 
 
