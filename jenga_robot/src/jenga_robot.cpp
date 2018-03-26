@@ -11,11 +11,13 @@
 #include <moveit_msgs/PlanningScene.h>
 #include <widowx_block_manipulation/PickAndPlaceAction.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <actionlib/server/simple_action_server.h>
-
+#include <std_msgs/String.h>
 
 #include <boost/scoped_ptr.hpp>
 
+geometry_msgs::Pose block; //New
 
 namespace widowx_block_manipulation
 {
@@ -34,6 +36,8 @@ private:
 
   ros::Publisher target_pose_pub_;
   ros::Subscriber pick_and_place_sub_;
+  
+  
 
   // Move groups to control arm and gripper with MoveIt!
   moveit::planning_interface::MoveGroupInterface arm_;
@@ -46,17 +50,29 @@ private:
   double z_up;
 
 public:
+
+
   PickAndPlaceServer(const std::string name) :
-    nh_("~"), as_(name, false), action_name_(name), arm_("jenga_robot"), gripper_("widowx_gripper")
+    nh_("~"), as_(name, false), action_name_(name), arm_("jenga_robot"), gripper_("jenga_gripper")
   {
     // Register the goal and feedback callbacks
+    
     as_.registerGoalCallback(boost::bind(&PickAndPlaceServer::goalCB, this));
     as_.registerPreemptCallback(boost::bind(&PickAndPlaceServer::preemptCB, this));
 
     as_.start();
 
     target_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/target_pose", 1, true);
+
+    ros::Subscriber block_position = nh_.subscribe("/game_msgs/new_blocks", 1, callback); //New
+    
   }
+
+  static void callback(const geometry_msgs::PoseStamped& msg){ //New
+	block=msg.pose;
+       
+  }
+
 
   void goalCB()
   {
@@ -310,25 +326,20 @@ public:
 int main(int argc, char** argv)
 {
 ros::init(argc, argv, "jenga_robot");
+
 ros::AsyncSpinner spinner(1);
 spinner.start();
 
 
-
-static const std::string JENGA_ROBOT = "jenga_robot";
-
-moveit::planning_interface::MoveGroupInterface move_group(JENGA_ROBOT);
-
-
-
-moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-
-moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-
-bool success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
+server.setGripper(0.03);
+ros::Duration(0.8).sleep();
+server.moveArmTo(block);
+server.setGripper(0.0);
+ros::Duration(0.8).sleep();
 
 
-/*move_group.move();*/
+spinner.stop();
 
 
 
