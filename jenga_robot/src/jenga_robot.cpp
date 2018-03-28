@@ -7,6 +7,7 @@
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/kinematic_constraints/utils.h>
+
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit_msgs/PlanningScene.h>
 #include <widowx_block_manipulation/PickAndPlaceAction.h>
@@ -17,7 +18,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-geometry_msgs::Pose block; //New
+geometry_msgs::PoseStamped block; //New
 
 namespace widowx_block_manipulation
 {
@@ -36,6 +37,7 @@ private:
 
   ros::Publisher target_pose_pub_;
   ros::Subscriber pick_and_place_sub_;
+  
   
   
 
@@ -57,153 +59,22 @@ public:
   {
     // Register the goal and feedback callbacks
     
-    as_.registerGoalCallback(boost::bind(&PickAndPlaceServer::goalCB, this));
-    as_.registerPreemptCallback(boost::bind(&PickAndPlaceServer::preemptCB, this));
+
 
     as_.start();
 
     target_pose_pub_ = nh_.advertise<geometry_msgs::PoseStamped>("/target_pose", 1, true);
-
-    ros::Subscriber block_position = nh_.subscribe("/game_msgs/new_blocks", 1, callback); //New
     
   }
+  
 
-  static void callback(const geometry_msgs::PoseStamped& msg){ //New
-	block=msg.pose;
-       
-  }
+  static void callback(const geometry_msgs::PoseStamped& msg)
+     { 
+	block=msg;
+	   
+     }
 
-
-  void goalCB()
-  {
-    ROS_INFO("[pick and place] Received goal!");
-    goal_ = as_.acceptNewGoal();
-    arm_link = goal_->frame;
-    gripper_open = goal_->gripper_open;
-    gripper_closed = goal_->gripper_closed;
-    z_up = goal_->z_up;
-
-    arm_.setPoseReferenceFrame(arm_link);
-
-    // Allow some leeway in position (meters) and orientation (radians)
-    arm_.setGoalPositionTolerance(0.001);
-    arm_.setGoalOrientationTolerance(0.1);
-
-    // Allow replanning to increase the odds of a solution
-    arm_.allowReplanning(true);
-
-    if (goal_->topic.length() < 1)
-    {
-      pickAndPlace(goal_->pickup_pose, goal_->place_pose);
-    }
-    else
-    {
-      pick_and_place_sub_ = nh_.subscribe(goal_->topic, 1, &PickAndPlaceServer::sendGoalFromTopic, this);
-    }
-  }
-
-  void sendGoalFromTopic(const geometry_msgs::PoseArrayConstPtr &msg)
-  {
-    ROS_INFO("[pick and place] Got goal from topic! %s", goal_->topic.c_str());
-    pickAndPlace(msg->poses[0], msg->poses[1]);
-    pick_and_place_sub_.shutdown();
-  }
-
-  void preemptCB()
-  {
-    ROS_INFO("%s: Preempted", action_name_.c_str());
-    // set the action state to preempted
-    as_.setPreempted();
-  }
-
-  void pickAndPlace(const geometry_msgs::Pose& start_pose, const geometry_msgs::Pose& end_pose)
-  {
-    ROS_INFO("[pick and place] Picking. Also placing.");
-
-    geometry_msgs::Pose target;
-
-    /* open gripper */
-    if (setGripper(gripper_open) == false)
-      return;
-
-    /* hover over */
-    target = start_pose;
-    target.position.z = z_up;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* go down */
-    target.position.z = start_pose.position.z;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* close gripper */
-    if (setGripper(gripper_closed) == false)
-      return;
-    ros::Duration(0.8).sleep(); // ensure that gripper properly grasp the cube before lifting the arm
-
-    /* go up */
-    target.position.z = z_up;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* hover over */
-    target = end_pose;
-    target.position.z = z_up;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* go down */
-    target.position.z = end_pose.position.z;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* open gripper */
-    if (setGripper(gripper_open) == false)
-      return;
-    ros::Duration(0.6).sleep(); // ensure that gripper properly release the cube before lifting the arm
-
-    /* go up */
-    target.position.z = z_up;
-    if (moveArmTo(target) == false)
-      return;
-
-    /* move out of camera's view */
-    target.position.z = z_up;
-    if (moveArmTo("pulled_back_pose") == false)
-      return;
-
-    as_.setSucceeded(result_);
-  }
-
-
-  /**
-   * Move arm to a named configuration, normally described in the robot semantic description SRDF file.
-   * @param target Named target to achieve
-   * @return True of success, false otherwise
-   */
-  bool moveArmTo(const std::string& target)
-  {
-    ROS_DEBUG("[pick and place] Move arm to '%s' position", target.c_str());
-    if (arm_.setNamedTarget(target) == false)
-    {
-      ROS_ERROR("[pick and place] Set named target '%s' failed", target.c_str());
-      return false;
-    }
-
-    moveit::planning_interface::MoveItErrorCode result = arm_.move();
-    if (bool(result) == true)
-    {
-      return true;
-    }
-    else
-    {
-      ROS_ERROR("[pick and place] Move to target failed (error %d)", result.val);
-      as_.setAborted(result_);
-      return false;
-    }
-  }
-
+  
   /**
    * Move arm to a target pose. Only position coordinates are taken into account; the
    * orientation is calculated according to the direction and distance to the target.
@@ -212,13 +83,25 @@ public:
    */
   bool moveArmTo(const geometry_msgs::Pose& target)
   {
+
+    arm_.setPoseReferenceFrame("wrist_2_link");
+
+    // Allow some leeway in position (meters) and orientation (radians)
+    arm_.setGoalPositionTolerance(0.001);
+    arm_.setGoalOrientationTolerance(0.1);
+
+    // Allow replanning to increase the odds of a solution
+    arm_.allowReplanning(true);
+
+
+
     int attempts = 0;
     ROS_INFO("[pick and place] Move arm to [%.2fx, %.2fy, %.2fz, %.2fyaw]",
              target.position.x, target.position.y, target.position.z, tf::getYaw(target.orientation));
     while (attempts < 5)
     {
       geometry_msgs::PoseStamped modiff_target;
-      modiff_target.header.frame_id = arm_link;
+      modiff_target.header.frame_id = "wrist_2_link";
       modiff_target.pose = target;
 
       double x = modiff_target.pose.position.x;
@@ -253,9 +136,9 @@ public:
       modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
 
       ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, z, d, rp, ry);
-      target_pose_pub_.publish(modiff_target);
+     bool check = arm_.setPoseTarget(modiff_target, arm_.getEndEffectorLink());
 
-      if (arm_.setPoseTarget(modiff_target) == false)
+      if (check == false)
       {
         ROS_ERROR("Set pose target [%.2f, %.2f, %.2f, %.2f] failed",
                   modiff_target.pose.position.x, modiff_target.pose.position.y, modiff_target.pose.position.z,
@@ -326,18 +209,18 @@ public:
 int main(int argc, char** argv)
 {
 ros::init(argc, argv, "jenga_robot");
-
+ros::NodeHandle nh;
+ros::Subscriber block_position;
 ros::AsyncSpinner spinner(1);
 spinner.start();
-
-
 widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
+block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); //New
+
 server.setGripper(0.03);
 ros::Duration(0.8).sleep();
-server.moveArmTo(block);
+server.moveArmTo(block.pose);
 server.setGripper(0.0);
 ros::Duration(0.8).sleep();
-
 
 spinner.stop();
 
