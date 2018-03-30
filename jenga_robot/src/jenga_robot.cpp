@@ -84,15 +84,15 @@ public:
   bool moveArmTo(const geometry_msgs::Pose& target)
   {
 
-    arm_.setPoseReferenceFrame("wrist_2_link");
 
     // Allow some leeway in position (meters) and orientation (radians)
+    
     arm_.setGoalPositionTolerance(0.001);
-    arm_.setGoalOrientationTolerance(0.1);
+    arm_.setGoalOrientationTolerance(1);
+   
 
     // Allow replanning to increase the odds of a solution
     arm_.allowReplanning(true);
-
 
 
     int attempts = 0;
@@ -101,8 +101,15 @@ public:
     while (attempts < 5)
     {
       geometry_msgs::PoseStamped modiff_target;
-      modiff_target.header.frame_id = "wrist_2_link";
+      modiff_target.header.frame_id = "/world"; 
       modiff_target.pose = target;
+
+
+modiff_target.pose.position.z=0.4;
+modiff_target.pose.orientation.w=0;
+modiff_target.pose.orientation.x=0;
+modiff_target.pose.orientation.y=1;
+modiff_target.pose.orientation.z=0;
 
       double x = modiff_target.pose.position.x;
       double y = modiff_target.pose.position.y;
@@ -115,6 +122,9 @@ public:
         as_.setAborted(result_);
         return false;
       }
+      
+      
+
       // Pitch is 90 (vertical) at 10 cm from the arm base; the farther the target is, the closer to horizontal
       // we point the gripper. Yaw is the direction to the target. We also try some random variations of both to
       // increase the chances of successful planning.
@@ -136,7 +146,7 @@ public:
       modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
 
       ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, z, d, rp, ry);
-     bool check = arm_.setPoseTarget(modiff_target, arm_.getEndEffectorLink());
+     bool check = arm_.setPoseTarget(modiff_target, "wrist_2_link");
 
       if (check == false)
       {
@@ -146,8 +156,9 @@ public:
         as_.setAborted(result_);
         return false;
       }
-
-      moveit::planning_interface::MoveItErrorCode result = arm_.move();
+      moveit::planning_interface::MoveGroupInterface::Plan plan;
+      arm_.plan(plan);
+      moveit::planning_interface::MoveItErrorCode result = arm_.execute(plan);
       if (bool(result) == true)
       {
         return true;
@@ -201,26 +212,45 @@ public:
 };
 
 
-
-
-
-
-
 int main(int argc, char** argv)
 {
 ros::init(argc, argv, "jenga_robot");
 ros::NodeHandle nh;
 ros::Subscriber block_position;
-ros::AsyncSpinner spinner(1);
-spinner.start();
+
 widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
 block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); //New
 
-server.setGripper(0.03);
+ros::AsyncSpinner spinner(1);
+spinner.start();
+
+/*
+block.pose.position.z=0.5;
+block.pose.orientation.w=0;
+block.pose.orientation.x=0;
+block.pose.orientation.y=-1;
+block.pose.orientation.z=0;
+*/
+
+server.setGripper(0.031);
 ros::Duration(0.8).sleep();
 server.moveArmTo(block.pose);
-server.setGripper(0.0);
+server.setGripper(0.01);
 ros::Duration(0.8).sleep();
+
+
+/*
+geometry_msgs::Pose check;
+check.position.x=0.066845;
+check.position.y=0.0;
+check.position.z=0.5867777;
+check.orientation.x=0.027;
+check.orientation.y=-.003;
+check.orientation.z=0.027;
+check.orientation.w=1;
+
+server.moveArmTo(check);
+*/
 
 spinner.stop();
 
