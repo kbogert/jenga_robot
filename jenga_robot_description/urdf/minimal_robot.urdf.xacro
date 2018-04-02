@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<robot name="jenga_robot" xmlns:xacro="http://ros.org/wiki/xacro">
+        <xacro:include filename="$(find jenga_robot_description)/urdf/gazebo.urdf.xacro"/>
+
+        <xacro:include filename="$(find jenga_robot_description)/urdf/frame.urdf.xacro"/>
+        <xacro:include filename="$(find jenga_robot_description)/urdf/turntable.urdf.xacro"/>
+<!--	<xacro:include filename="$(find widowx_arm_description)/urdf/widowx.urdf.xacro"/> -->
+        <xacro:include filename="$(find jenga_robot_description)/urdf/build_platform.urdf.xacro"/>
+<!--        <xacro:include filename="$(find jenga_robot_description)/urdf/hopper.urdf.xacro"/> -->
+
+	<link name="world"/>
+
+	<xacro:jenga_frame parent="world" prefix="">
+		<origin xyz="0.0 0.0 ${0.0254*0.25}" rpy="0.0 0.0 0.0"/>
+	</xacro:jenga_frame>
+
+
+	<xacro:arm_turntable parent="frame_top_link" prefix="">
+		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+	</xacro:arm_turntable>
+
+
+	<xacro:build_platform parent="frame_main_link" prefix="">
+		<origin xyz="0.0 0.0 ${0.0254*11.2}" rpy="0.0 0.0 0.0"/>
+	</xacro:build_platform>
+
+
+
+</robot>
+

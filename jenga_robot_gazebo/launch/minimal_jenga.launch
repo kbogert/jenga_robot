@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="paused" default="false"/>
+  <arg name="gui" default="true"/>
+
+  <!-- arbotix controller uses gripper_action namespace, this matches -->
+  <remap from="/gripper_controller/gripper_cmd" to="/gripper_controller/gripper_action"/> 
+
+  
+  <!-- startup simulated world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" default="worlds/empty.world"/>
+    <arg name="paused" value="$(arg paused)"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="physics" value="bullet"/>
+  </include>
+
+  <!-- send robot urdf to param server -->
+  <include file="$(find jenga_robot_description)/launch/load_minimal_description.launch"/>
+
+  <!-- push robot_description to factory and spawn robot in gazebo -->
+  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -z 0.0" respawn="false" output="screen" />
+
+  <!-- controllers -->
+
+  <!-- block spawner -->
+  <node name="block_spawner" pkg="jenga_robot_gazebo" type="sim_stack.py" respawn="false" output="screen">
+
+	<param name="position_x" value="0"/>
+	<param name="position_y" value="0.1516"/>
+<!--	<param name="position_z" value="0.28575"/> This triggers the delete after 3 spawns-->
+<!--	<param name="position_z" value="0.2933"/> -->
+
+	<param name="position_z" value="0.3020"/> 
+
+	<param name="orientation_x" value="0.5"/>
+	<param name="orientation_y" value="-0.5"/>
+	<param name="orientation_z" value="0.5"/>
+	<param name="orientation_w" value="0.5"/>
+
+	<param name="block_description" command="$(find xacro)/xacro '$(find jenga_robot_description)/urdf/block.urdf.xacro'"/>
+  </node>
+
+</launch>
+
