@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import roslib; roslib.load_manifest('widowx_arm_controller')
+import roslib; roslib.load_manifest('jenga_robot_gazebo')
 import rospy
 from gazebo_msgs.srv import DeleteModel, SpawnModel, GetModelState
 from std_msgs.msg import Empty

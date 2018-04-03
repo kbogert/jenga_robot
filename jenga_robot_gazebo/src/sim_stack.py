@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import roslib; roslib.load_manifest('widowx_arm_controller')
+import roslib; roslib.load_manifest('jenga_robot_gazebo')
 import rospy
 from gazebo_msgs.srv import DeleteModel, SpawnModel, GetModelState
 from std_msgs.msg import Empty
@@ -9,6 +9,11 @@ from geometry_msgs.msg import *
 
 block_urdf = None
 base_pose = None
+
+# need the store the state of all blocks, for building the state message
+# need to provide an actionlib interface for removing a block and placing it on top
+
+
 
 def spawn_new_block(spawn_srv, new_id, block_pose):
 
@@ -114,14 +119,14 @@ if __name__=='__main__':
 
 	gazebo_model_states_srv = rospy.ServiceProxy("gazebo/get_model_state", GetModelState)
 	
-	block_detection_pub = rospy.Publisher('/game_msgs/new_blocks', PoseStamped, queue_size=10)
+	state_pub = rospy.Publisher('/game_msgs/state', std_msgs.msg.String, queue_size=10)
 	system_reset_pub = rospy.Publisher('/game_msgs/reset', Empty, queue_size=10)
 
 	rospy.sleep(2.0)
 
 	desired_frequency = rospy.get_param('~frequency', default = 1.0)
-	add_block_delay = rospy.get_param('~add_block_delay_secs', default = 6.0)
-	err = rospy.get_param('~block_height_err', default = 0.005)
+	stack_height = rospy.get_param('~stack_height', default = 3.0)
+#	err = rospy.get_param('~block_height_err', default = 0.005)
 
 	block_pose = Pose()
     
@@ -156,7 +161,7 @@ if __name__=='__main__':
 		# Do we need to add another block?
 		if not stack_constructed:
 			
-			spawn_all_blocks(gazebo_spawn_model_srv, blocks_list, 3)
+			spawn_all_blocks(gazebo_spawn_model_srv, blocks_list, stack_height)
 			stack_constructed = True
 
 
