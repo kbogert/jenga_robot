@@ -13,6 +13,7 @@ base_pose = None
 # need the store the state of all blocks, for building the state message
 # need to provide an actionlib interface for removing a block and placing it on top
 
+stack_state = []
 
 
 def spawn_new_block(spawn_srv, new_id, block_pose):
@@ -48,6 +49,8 @@ def spawn_all_blocks(spawn_srv, blocks_list, num_levels):
 		next_pose.position.y = block_pose.position.y
 		next_pose.position.x = block_pose.position.x
 
+		stack_state.append([])
+
 		if rotated:
 
 			next_pose.position.y = block_pose.position.y + 0.025
@@ -62,6 +65,7 @@ def spawn_all_blocks(spawn_srv, blocks_list, num_levels):
 			else:
 				next_pose.position.y += 0.0255 # BLOCK WIDTH is .025
 			blocks_list.append(newid)
+			stack_state[i].append(1)
 
 		next_pose.position.z += 0.015
 		tmp_rotation = next_pose.orientation
@@ -103,6 +107,22 @@ def hasFallen(model_states, blocks_list):
 def getBlockPose(model_states, id):
 
 	return model_states(id, "world").pose
+
+def publishState(state_pub):
+
+	toPub = std_msgs.msg.String()
+	
+	s = ""
+
+
+	for level in stack_state:
+		for entry in level:
+			s += str(entry)
+
+	toPub.data = s
+
+	state_pub.publish(toPub)
+
 
 if __name__=='__main__':
 
@@ -157,12 +177,15 @@ if __name__=='__main__':
 			rospy.sleep(sleep_time)
 			rospy.sleep(sleep_time)
 			stack_constructed = False
+			stack_state = []
 
 		# Do we need to add another block?
 		if not stack_constructed:
 			
 			spawn_all_blocks(gazebo_spawn_model_srv, blocks_list, stack_height)
 			stack_constructed = True
+			publishState(state_pub)
 
 
 		rospy.sleep(sleep_time)
+
