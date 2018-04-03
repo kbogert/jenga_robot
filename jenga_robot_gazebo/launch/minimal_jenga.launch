@@ -27,7 +27,8 @@
   <node name="block_spawner" pkg="jenga_robot_gazebo" type="sim_stack.py" respawn="false" output="screen">
 
 	<param name="position_x" value="0"/>
-	<param name="position_y" value="0.1516"/>
+	<param name="position_y" value="0"/>
+<!--	<param name="position_y" value="0.1516"/>-->
 <!--	<param name="position_z" value="0.28575"/> This triggers the delete after 3 spawns-->
 <!--	<param name="position_z" value="0.2933"/> -->
 

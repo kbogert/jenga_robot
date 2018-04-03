@@ -8,11 +8,62 @@ from std_msgs.msg import Empty
 from geometry_msgs.msg import *
 
 block_urdf = None
-block_pose = None
+base_pose = None
 
-def spawn_new_block(spawn_srv, new_id):
+def spawn_new_block(spawn_srv, new_id, block_pose):
 
 	spawn_srv(new_id, block_urdf, "", block_pose, "world")
+
+def spawn_all_blocks(spawn_srv, blocks_list, num_levels):
+
+	rotated = False
+	count = 0
+
+        next_pose = Pose()
+    
+        next_pose.position.x = block_pose.position.x
+        next_pose.position.y = block_pose.position.y
+        next_pose.position.z = block_pose.position.z
+    
+        next_pose.orientation.x = block_pose.orientation.x
+        next_pose.orientation.y = block_pose.orientation.y
+        next_pose.orientation.z = block_pose.orientation.z
+        next_pose.orientation.w = block_pose.orientation.w
+
+	rotation_swap = Pose()
+
+        rotation_swap.orientation.x = 0.499
+        rotation_swap.orientation.y = -0.499
+        rotation_swap.orientation.z = 0.501
+        rotation_swap.orientation.w = 0.501
+
+	
+	for i in range(num_levels):
+
+		next_pose.position.y = block_pose.position.y
+		next_pose.position.x = block_pose.position.x
+
+		if rotated:
+
+			next_pose.position.y = block_pose.position.y + 0.025
+			next_pose.position.x = block_pose.position.x - 0.025
+
+		for j in range(3):
+			newid = "block" + str(count)
+			count += 1
+			spawn_new_block(spawn_srv, newid, next_pose)
+			if rotated:
+				next_pose.position.x += 0.0255 # BLOCK WIDTH is .025
+			else:
+				next_pose.position.y += 0.0255 # BLOCK WIDTH is .025
+			blocks_list.append(newid)
+
+		next_pose.position.z += 0.015
+		tmp_rotation = next_pose.orientation
+		next_pose.orientation = rotation_swap.orientation
+		rotation_swap.orientation = tmp_rotation
+
+		rotated = not rotated
 
 def delete_all_blocks(delete_srv, blocks_list):
 
@@ -21,6 +72,7 @@ def delete_all_blocks(delete_srv, blocks_list):
 
 
 def hasFallen(model_states, blocks_list):
+
 
 	if len(blocks_list) < 3:
 		return False
@@ -32,10 +84,12 @@ def hasFallen(model_states, blocks_list):
 
 	for block in blocks_list:
 		total_height += model_states(block, "world").pose.position.z - block_pose.position.z
-		
-	avg_height = total_height / len(blocks_list)
+	
+#	total_height /= 3
 
-	if avg_height < len(blocks_list) /2 * block_height:
+	avg_height = total_height / (len(blocks_list) / 3)
+
+	if avg_height < (len(blocks_list) / 3) /2 * block_height:
 		# we've fallen
 		return True
 
@@ -84,10 +138,7 @@ if __name__=='__main__':
 	block_urdf = rospy.get_param('~block_description')
 
 	blocks_list = []
-	block_num = 0
-	last_block_add_time = 0
-	block_waiting = False
-
+	stack_constructed = False
 
 	sleep_time = 1.0 / desired_frequency
 	while not rospy.is_shutdown():
@@ -95,45 +146,18 @@ if __name__=='__main__':
 
 		if hasFallen(gazebo_model_states_srv, blocks_list):
 			delete_all_blocks(gazebo_delete_model_srv, blocks_list)
-			last_block_add_time = 0
 			blocks_list[:] = []
-			block_num = 0
-			block_waiting = False
 
 			system_reset_pub.publish(Empty())
 			rospy.sleep(sleep_time)
 			rospy.sleep(sleep_time)
+			stack_constructed = False
 
 		# Do we need to add another block?
-		if not block_waiting and rospy.get_time() - last_block_add_time > add_block_delay:
+		if not stack_constructed:
 			
-			block_num += 1
-			newid = "block" + str(block_num)
-			spawn_new_block(gazebo_spawn_model_srv, newid)
-			block_waiting = True
-			blocks_list.append(newid)
-
-		# Is a block waiting to be picked up? send new_blocks message
-
-
-		if block_waiting:
-
-			cur_block_pose = getBlockPose(gazebo_model_states_srv, "block" + str(block_num))
-			z_value = cur_block_pose.position.z
-
-			if z_value > block_pose.position.z + err:
-				block_waiting = False
-				last_block_add_time = rospy.get_time()
-			else:
-
-				msg = PoseStamped()
-				
-#				msg.header.seq = block_num
-				msg.header.stamp = rospy.Time.now()
-
-				msg.pose = cur_block_pose
-
-				block_detection_pub.publish(msg)
+			spawn_all_blocks(gazebo_spawn_model_srv, blocks_list, 3)
+			stack_constructed = True
 
 
 		rospy.sleep(sleep_time)
