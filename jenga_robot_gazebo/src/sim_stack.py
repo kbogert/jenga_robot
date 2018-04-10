@@ -3,7 +3,8 @@
 
 import roslib; roslib.load_manifest('jenga_robot_gazebo')
 import rospy
-from gazebo_msgs.srv import DeleteModel, SpawnModel, GetModelState
+from gazebo_msgs.srv import DeleteModel, SpawnModel, GetModelState, SetModelState
+from gazebo_msgs.msg import ModelState
 from std_msgs.msg import Empty, Int32
 from geometry_msgs.msg import *
 
@@ -12,6 +13,7 @@ block_pose = None
 spawn_srv = None
 delete_srv = None
 model_states = None
+set_model_state = None
 
 blocks_list = []
 
@@ -175,8 +177,14 @@ def moveBlock(req):
 			
 	blockid = str(block_pos_to_id[blockpos])
 
-	delete_srv(blockid)
+#	delete_srv(blockid)
+	
+#	print("Start from")
+#	print(model_states(blockid, "world"))
+
 	stack_state[int(blockpos / 3)][blockpos % 3] = 0
+
+#	rospy.sleep(0.5)
 
 	# now the block has been removed, figure out where to place it	
 
@@ -205,6 +213,7 @@ def moveBlock(req):
 		else:
 			break
 
+
         next_pose = Pose()
     
         next_pose.position.x = block_pose.position.x
@@ -212,10 +221,10 @@ def moveBlock(req):
         next_pose.position.z = z_height
 
 	if not whichRotation:
-	        next_pose.orientation.x = block_pose.orientation.x
-	        next_pose.orientation.y = block_pose.orientation.y
-	        next_pose.orientation.z = block_pose.orientation.z
-	        next_pose.orientation.w = block_pose.orientation.w
+	        next_pose.orientation.x = 0
+	        next_pose.orientation.y = -0.7071
+	        next_pose.orientation.z = 0
+	        next_pose.orientation.w = 0.7071
 
 		next_pose.position.y += 0.0255 * pos
 	else:
@@ -229,7 +238,16 @@ def moveBlock(req):
 	
 		next_pose.position.x += 0.0255 * pos
 		
-	spawn_new_block(blockid, next_pose)
+#	spawn_new_block(blockid, next_pose)
+
+	new_block_state = ModelState()
+	new_block_state.model_name = blockid
+	new_block_state.pose = next_pose
+	new_block_state.twist = Twist()
+	new_block_state.reference_frame = "world"
+
+	print(new_block_state)
+	set_model_state(new_block_state)
 
 	del(block_pos_to_id[blockpos])
 
@@ -248,6 +266,7 @@ if __name__=='__main__':
 
 	gazebo_spawn_model_srv = rospy.ServiceProxy("gazebo/spawn_urdf_model", SpawnModel)
 	gazebo_delete_model_srv = rospy.ServiceProxy("gazebo/delete_model", DeleteModel)
+	set_model_state = rospy.ServiceProxy("gazebo/set_model_state", SetModelState)
 
 	spawn_srv = gazebo_spawn_model_srv
 	delete_srv = gazebo_delete_model_srv
