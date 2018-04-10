@@ -7,6 +7,7 @@ from gazebo_msgs.srv import DeleteModel, SpawnModel, GetModelState, SetModelStat
 from gazebo_msgs.msg import ModelState
 from std_msgs.msg import Empty, Int32
 from geometry_msgs.msg import *
+from jenga_robot_gazebo.srv import Move, MoveResponse
 
 block_urdf = None
 block_pose = None
@@ -233,10 +234,7 @@ def getBlockPose(model_states, id):
 
 	return model_states(id, "world").pose
 
-def publishState(state_pub):
-
-	toPub = std_msgs.msg.String()
-	
+def generateStateString():
 	s = ""
 
 
@@ -244,7 +242,13 @@ def publishState(state_pub):
 		for entry in level:
 			s += str(entry)
 
-	toPub.data = s
+	return s
+
+def publishState(state_pub):
+
+	toPub = std_msgs.msg.String()
+
+	toPub.data = generateStateString()
 
 	state_pub.publish(toPub)
 
@@ -252,6 +256,8 @@ def publishState(state_pub):
 def moveBlock(req):
 
 	blocknum = req.data
+
+	print("Moving block " + str(req.data))
 
 	blockCount = 0
 	blockpos = 0
@@ -348,6 +354,12 @@ def moveBlock(req):
 	block_pos_to_id[pos + (len(stack_state)-1) * 3] = blockid
 	stack_state[len(stack_state) - 1][pos] = 1
 
+	toPub = MoveResponse()
+
+	toPub.data = generateStateString()
+
+	return toPub
+
 if __name__=='__main__':
 
 	rospy.init_node('jenga_block_manager')
@@ -370,6 +382,8 @@ if __name__=='__main__':
 
 	state_pub = rospy.Publisher('/game_msgs/state', std_msgs.msg.String, queue_size=10)
 	system_reset_pub = rospy.Publisher('/game_msgs/reset', Empty, queue_size=10)
+
+	s = rospy.Service('/game_msgs/move', Move, moveBlock)
 
 	rospy.sleep(2.0)
 
@@ -415,14 +429,17 @@ if __name__=='__main__':
 			stack_constructed = True
 			publishState(state_pub)
 
-		elif stack_constructed:
+		else:
+			publishState(state_pub)
 
-			import random
-
-			msg = Int32()
-			msg.data = random.randint(0, len(blocks_list) - 1)
-		
-			print("Moving block " + str(msg.data))
-
-			moveBlock(msg)
+#		elif stack_constructed:
+#
+#			import random
+#
+#			msg = Int32()
+#			msg.data = random.randint(0, len(blocks_list) - 1)
+#		
+#			print("Moving block " + str(msg.data))
+#
+#			moveBlock(msg)
 
