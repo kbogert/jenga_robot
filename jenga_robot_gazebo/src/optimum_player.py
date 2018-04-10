@@ -68,7 +68,7 @@ if __name__=='__main__':
 
 			block_count = 0
 
-			for entry in state[0:len(state)]:
+			for entry in state[0:len(state)-3]:
 				if entry == '1':
 					block_count += 1
 			
