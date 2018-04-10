@@ -30,6 +30,12 @@ def spawn_new_block(new_id, pose):
 
 def spawn_all_blocks(num_levels):
 
+	# if blocks have already been spawned once, don't spawn again, instead move them to their correct positions
+
+	if len(blocks_list) > 0:
+		rebuild_tower(num_levels)
+		return
+
 	rotated = False
 	count = 0
 
@@ -86,12 +92,101 @@ def spawn_all_blocks(num_levels):
 
 	print(block_pos_to_id)
 
+
+def rebuild_tower(num_levels):
+	rotated = False
+	count = 0
+
+        next_pose = Pose()
+    
+        next_pose.position.x = block_pose.position.x
+        next_pose.position.y = block_pose.position.y
+        next_pose.position.z = block_pose.position.z
+    
+        next_pose.orientation.x = 0
+        next_pose.orientation.y = -0.7071
+        next_pose.orientation.z = 0
+        next_pose.orientation.w = 0.7071
+
+	rotation_swap = Pose()
+
+        rotation_swap.orientation.x = 0.499
+        rotation_swap.orientation.y = -0.499
+        rotation_swap.orientation.z = 0.501
+        rotation_swap.orientation.w = 0.501
+
+	
+	for i in range(num_levels):
+
+		next_pose.position.y = block_pose.position.y
+		next_pose.position.x = block_pose.position.x
+
+		stack_state.append([])
+
+		if rotated:
+
+			next_pose.position.y = block_pose.position.y + 0.025
+			next_pose.position.x = block_pose.position.x - 0.025
+
+		for j in range(3):
+			newid = "block" + str(count)
+			#spawn_new_block(newid, next_pose)
+
+			new_block_state = ModelState()
+			new_block_state.model_name = newid
+			new_block_state.pose = next_pose
+			new_block_state.twist = Twist()
+			new_block_state.reference_frame = "world"
+
+			set_model_state(new_block_state)
+
+
+			if rotated:
+				next_pose.position.x += 0.0255 # BLOCK WIDTH is .025
+			else:
+				next_pose.position.y += 0.0255 # BLOCK WIDTH is .025
+
+			stack_state[i].append(1)
+			block_pos_to_id[count] = newid
+
+			count += 1
+
+		next_pose.position.z += 0.015
+		tmp_rotation = next_pose.orientation
+		next_pose.orientation = rotation_swap.orientation
+		rotation_swap.orientation = tmp_rotation
+
+		rotated = not rotated
+
+
+
 def delete_all_blocks():
 
-	for block in blocks_list:
-		delete_srv(block)
+#	for block in blocks_list:
+#		delete_srv(block)
 
-	blocks_list[:] = []
+#	blocks_list[:] = []
+
+	next_pose = Pose()
+	next_pose.position.x = block_pose.position.x
+	next_pose.position.y = block_pose.position.y + 0.5
+	next_pose.position.z = block_pose.position.z
+
+	next_pose.orientation.x = block_pose.orientation.x
+	next_pose.orientation.y = block_pose.orientation.y
+	next_pose.orientation.z = block_pose.orientation.z
+	next_pose.orientation.w = block_pose.orientation.w
+
+
+	for blockid in blocks_list:
+		new_block_state = ModelState()
+		new_block_state.model_name = blockid
+		new_block_state.pose = next_pose
+		new_block_state.twist = Twist()
+		new_block_state.reference_frame = "world"
+
+		set_model_state(new_block_state)
+
 	block_pos_to_id = {}
 
 def hasFallen():
@@ -246,7 +341,6 @@ def moveBlock(req):
 	new_block_state.twist = Twist()
 	new_block_state.reference_frame = "world"
 
-	print(new_block_state)
 	set_model_state(new_block_state)
 
 	del(block_pos_to_id[blockpos])
@@ -305,7 +399,7 @@ if __name__=='__main__':
 
 		# Do we need to destroy all blocks?
 
-		if hasFallen():
+		if stack_constructed and hasFallen():
 			delete_all_blocks()
 
 			system_reset_pub.publish(Empty())
@@ -321,7 +415,7 @@ if __name__=='__main__':
 			stack_constructed = True
 			publishState(state_pub)
 
-		else:
+		elif stack_constructed:
 
 			import random
 

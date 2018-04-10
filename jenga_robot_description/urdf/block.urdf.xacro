@@ -28,8 +28,9 @@
             <inertia ixx="0.000005566" ixy="0.0" ixz="0.0" iyy="0.00000521" iyz="0.0" izz="0.000000757" />
          </inertial>
       </link>
-
       <gazebo reference="jenga_block_link">
+
+<!--
 
 	<collision><surface>
 		<bounce><threshold>100000</threshold></bounce>
@@ -53,9 +54,9 @@
 
 	</contact>
 	</surface></collision>
+-->
 
 	<material>Gazebo/Yellow</material>
-
       </gazebo>
 
 </robot>
