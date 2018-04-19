@@ -208,6 +208,15 @@ def hasFallen():
 			print(pos)
 			return True
 
+	# check if any of the levels have all zeros
+
+	for level in stack_state:
+		total = 0
+		for entry in level:
+			total += entry
+
+		if total == 0:
+			return True
 	return False
 
 	# average the z-height of each block's position, if below half of the ideal block height, we've fallen
