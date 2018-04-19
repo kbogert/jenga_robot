@@ -360,6 +360,9 @@ def moveBlock(req):
 
 	return toPub
 
+def resetStack(req):
+	delete_all_blocks()
+
 if __name__=='__main__':
 
 	rospy.init_node('jenga_block_manager')
@@ -382,6 +385,7 @@ if __name__=='__main__':
 
 	state_pub = rospy.Publisher('/game_msgs/state', std_msgs.msg.String, queue_size=10)
 	system_reset_pub = rospy.Publisher('/game_msgs/reset', Empty, queue_size=10)
+	rospy.Subscriber("/game_msgs/rebuild_stack", Empty, resetStack)
 
 	s = rospy.Service('/game_msgs/move', Move, moveBlock)
 
