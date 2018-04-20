@@ -201,11 +201,12 @@ def hasFallen():
 	for block in blocks_list:
 		pos =  model_states(block, "world").pose.position
 
-		if (pos.x < block_pose.position.x - (0.025 * 2.5)) or ( pos.x > block_pose.position.x + (0.025 * 4.5)) or ( pos.y < block_pose.position.y - (0.025 * 1)) or (pos.y > block_pose.position.y + (0.025 * 4.5) ):
+		if (pos.x < block_pose.position.x - (0.025 * 1.15)) or ( pos.x > block_pose.position.x + (0.025 * 3.1)) or ( pos.y < block_pose.position.y - (0.025 * 1.15)) or (pos.y > block_pose.position.y + (0.025 * 3.1) ):
 
 			print("Fall detected")
 			print(block)
 			print(pos)
+			print(block_pose)
 			return True
 
 	# check if any of the levels have all zeros
