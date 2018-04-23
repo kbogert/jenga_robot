@@ -24,6 +24,8 @@ blocks_list = []
 stack_state = []
 block_pos_to_id = {}
 
+isMovingBlocks = False
+
 
 def spawn_new_block(new_id, pose):
 
@@ -162,11 +164,13 @@ def rebuild_tower(num_levels):
 
 
 def delete_all_blocks():
-
+	global isMovingBlocks
 #	for block in blocks_list:
 #		delete_srv(block)
 
 #	blocks_list[:] = []
+
+	isMovingBlocks = True
 
 	next_pose = Pose()
 	next_pose.position.x = block_pose.position.x
@@ -186,7 +190,14 @@ def delete_all_blocks():
 		new_block_state.twist = Twist()
 		new_block_state.reference_frame = "world"
 
-		set_model_state(new_block_state)
+		try:
+			set_model_state(new_block_state)
+		except:
+			pass
+
+		rospy.sleep(0.1)
+
+	isMovingBlocks = False
 
 	block_pos_to_id = {}
 
@@ -264,6 +275,19 @@ def publishState(state_pub):
 
 
 def moveBlock(req):
+
+	global isMovingBlocks
+
+	if isMovingBlocks:
+		while isMovingBlocks:
+			rospy.sleep(0.1)
+		
+		toPub = MoveResponse()
+
+		toPub.data = ""
+
+		return toPub
+
 
 	blocknum = req.data
 
