@@ -3,5 +3,8 @@
   <!-- Load the URDF into the ROS Parameter Server -->
   <param name="robot_description" command="$(find xacro)/xacro '$(find jenga_robot_description)/urdf/jenga_robot.urdf.xacro'"/>
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+  <param name="block_description" command="$(find xacro)/xacro '$(find jenga_robot_description)/urdf/block.urdf.xacro'"/>
+   <node name="block_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
 </launch>
 

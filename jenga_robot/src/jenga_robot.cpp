@@ -8,6 +8,11 @@
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/kinematic_constraints/utils.h>
 
+#include <moveit_simple_grasps/simple_grasps.h>
+#include <moveit_simple_grasps/grasp_data.h>
+#include <moveit_visual_tools/moveit_visual_tools.h>
+
+
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <moveit_msgs/PlanningScene.h>
 #include <widowx_block_manipulation/PickAndPlaceAction.h>
@@ -73,6 +78,14 @@ public:
 	block=msg;
 	   
      }
+  void pickBlock(const std::string &object)
+     {
+        arm_.planGraspsAndPick(object);
+     }
+  void placeBlock(const std::string &object)
+     {
+        arm_.place(object);
+     }
 
   
   /**
@@ -87,9 +100,10 @@ public:
 
     // Allow some leeway in position (meters) and orientation (radians)
     
-    arm_.setGoalPositionTolerance(0.001);
-    arm_.setGoalOrientationTolerance(1);
-   
+    arm_.setGoalPositionTolerance(0.05);
+    arm_.setGoalOrientationTolerance(0.05);
+    //arm_.setGoalJointTolerance(0.05);
+    
 
     // Allow replanning to increase the odds of a solution
     arm_.allowReplanning(true);
@@ -98,24 +112,25 @@ public:
     int attempts = 0;
     ROS_INFO("[pick and place] Move arm to [%.2fx, %.2fy, %.2fz, %.2fyaw]",
              target.position.x, target.position.y, target.position.z, tf::getYaw(target.orientation));
-    while (attempts < 5)
+    while (attempts < 20)
     {
       geometry_msgs::PoseStamped modiff_target;
       modiff_target.header.frame_id = "/world"; 
       modiff_target.pose = target;
 
 
-modiff_target.pose.position.z=0.4;
+modiff_target.pose.position.z=0.61; //change**********************************
+
 modiff_target.pose.orientation.w=0;
 modiff_target.pose.orientation.x=0;
-modiff_target.pose.orientation.y=1;
+modiff_target.pose.orientation.y=-1;
 modiff_target.pose.orientation.z=0;
 
       double x = modiff_target.pose.position.x;
       double y = modiff_target.pose.position.y;
       double z = modiff_target.pose.position.z;
       double d = sqrt(x*x + y*y);
-      if (d > 0.3)
+      if (d > 0.3) 
       {
         // Maximum reachable distance by the arm is 30 cm
         ROS_ERROR("Target pose out of reach [%f > %f]", d, 0.3);
@@ -125,21 +140,19 @@ modiff_target.pose.orientation.z=0;
       
       
 
-      // Pitch is 90 (vertical) at 10 cm from the arm base; the farther the target is, the closer to horizontal
+      // Pitch is 90 (vertical) at 10 cm from the arm base; the farther the target is, the closer to horizontalquaternion
       // we point the gripper. Yaw is the direction to the target. We also try some random variations of both to
       // increase the chances of successful planning.
       double rp = M_PI_2 - std::asin((d - 0.1)/0.29); // 0.29 = arm's max reach - vertical pitch distance + ε
       double ry = std::atan2(y, x);
 
 
-      //x0, y1, z0, w-0.2
-      //tf::Quaternion q = tf::createQuaternionFromRPY(0.0,
-      //                                               attempts*fRand(-0.05, +0.05) + rp,
-      //                                               attempts*fRand(-0.05, +0.05) + ry);
-      tf::Quaternion q = tf::createQuaternionFromRPY(3.14,
-                                                     attempts*fRand(-0.05, +0.05) /* + rp*/,
-                                                     -3.14+attempts*fRand(-0.05, +0.05) + ry);
-      tf::quaternionTFToMsg(q, modiff_target.pose.orientation);
+
+      /*tf::Quaternion q = tf::createQuaternionFromRPY(3.14,
+                                                     attempts*fRand(-0.05, +0.05),
+                                                     3.14+attempts*fRand(-0.05, +0.05) + ry);
+
+      tf::quaternionTFToMsg(q, modiff_target.pose.orientation);*/
 
       // Slightly increase z proportionally to pitch to avoid hitting the table with the lower gripper corner
       ROS_INFO("z increase:  %f  +  %f", modiff_target.pose.position.z, std::abs(std::cos(rp))/50.0);
@@ -224,33 +237,16 @@ block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); /
 ros::AsyncSpinner spinner(1);
 spinner.start();
 
-/*
-block.pose.position.z=0.5;
-block.pose.orientation.w=0;
-block.pose.orientation.x=0;
-block.pose.orientation.y=-1;
-block.pose.orientation.z=0;
-*/
 
 server.setGripper(0.031);
 ros::Duration(0.8).sleep();
+
 server.moveArmTo(block.pose);
 server.setGripper(0.01);
 ros::Duration(0.8).sleep();
 
+while(1);
 
-/*
-geometry_msgs::Pose check;
-check.position.x=0.066845;
-check.position.y=0.0;
-check.position.z=0.5867777;
-check.orientation.x=0.027;
-check.orientation.y=-.003;
-check.orientation.z=0.027;
-check.orientation.w=1;
-
-server.moveArmTo(check);
-*/
 
 spinner.stop();
 
