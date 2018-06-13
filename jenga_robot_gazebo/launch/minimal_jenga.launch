@@ -40,6 +40,7 @@
 	<param name="orientation_w" value="0.5"/>
 
 	<param name="stack_height" value="3"/> 
+	<param name="frequency" value="1"/>
 
 	<param name="block_description" command="$(find xacro)/xacro '$(find jenga_robot_description)/urdf/block.urdf.xacro'"/>
   </node>
