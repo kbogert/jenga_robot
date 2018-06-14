@@ -10,21 +10,30 @@
 
   <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world_joint world 100" />
 
-  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+<!--  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="/use_gui" value="false"/>
   </node>
-  
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+  -->
+
+<!--  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" /> -->
+
 
   <include file="$(find jenga_robot_moveit_config)/launch/moveit_rviz.launch">
     <arg name="config" value="true"/>
   </include>
 
-  <node name="jenga_robot" pkg="jenga_robot" type="jenga_robot" respawn="true" launch-prefix="$(arg launch_prefix)" output="screen">
+
+  <include file="$(find jenga_robot_moveit_config)/launch/move_group.launch">
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution" value="false"/>
+    <arg name="info" value="true"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+
+  <node name="jenga_robot" pkg="jenga_robot" type="jenga_robot" respawn="false" launch-prefix="$(arg launch_prefix)" output="screen">
     <rosparam command="load" file="$(find jenga_robot_moveit_config)/config/kinematics.yaml"/>
     <param name="/planning_plugin" value="ompl_interface/OMPLPlanner"/>
     <rosparam command="load" file="$(find jenga_robot_moveit_config)/config/ompl_planning.yaml"/>
   </node>
-
 
 </launch>

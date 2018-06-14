@@ -130,7 +130,7 @@ if __name__=='__main__':
 				
 #				msg.header.seq = block_num
 				msg.header.stamp = rospy.Time.now()
-
+				msg.header.frame_id = "world"
 				msg.pose = cur_block_pose
 
 				block_detection_pub.publish(msg)

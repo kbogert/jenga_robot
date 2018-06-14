@@ -24,6 +24,7 @@
 #include <boost/scoped_ptr.hpp>
 
 geometry_msgs::PoseStamped block; //New
+bool have_block;
 
 namespace widowx_block_manipulation
 {
@@ -76,7 +77,7 @@ public:
   static void callback(const geometry_msgs::PoseStamped& msg)
      { 
 	block=msg;
-	   
+	have_block = true;
      }
   void pickBlock(const std::string &object)
      {
@@ -94,7 +95,7 @@ public:
    * @param target Pose target to achieve
    * @return True of success, false otherwise
    */
-  bool moveArmTo(const geometry_msgs::Pose& target)
+  bool moveArmTo(const geometry_msgs::Pose& target, double z_addition)
   {
 
 
@@ -112,14 +113,18 @@ public:
     int attempts = 0;
     ROS_INFO("[pick and place] Move arm to [%.2fx, %.2fy, %.2fz, %.2fyaw]",
              target.position.x, target.position.y, target.position.z, tf::getYaw(target.orientation));
+
     while (attempts < 20)
     {
+
       geometry_msgs::PoseStamped modiff_target;
       modiff_target.header.frame_id = "/world"; 
       modiff_target.pose = target;
 
+      modiff_target.pose.position.z += z_addition;
 
-modiff_target.pose.position.z=0.61; //change**********************************
+
+//modiff_target.pose.position.z=0.61; //change**********************************
 
 modiff_target.pose.orientation.w=0;
 modiff_target.pose.orientation.x=0;
@@ -155,11 +160,14 @@ modiff_target.pose.orientation.z=0;
       tf::quaternionTFToMsg(q, modiff_target.pose.orientation);*/
 
       // Slightly increase z proportionally to pitch to avoid hitting the table with the lower gripper corner
-      ROS_INFO("z increase:  %f  +  %f", modiff_target.pose.position.z, std::abs(std::cos(rp))/50.0);
-      modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
+//      ROS_INFO("z increase:  %f  +  %f", modiff_target.pose.position.z, std::abs(std::cos(rp))/50.0);
+//      modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
 
-      ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, z, d, rp, ry);
+      ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, modiff_target.pose.position.z, d, rp, ry);
      bool check = arm_.setPoseTarget(modiff_target, "wrist_2_link");
+      
+//      bool check = arm_.setPositionTarget(modiff_target.pose.position.x, modiff_target.pose.position.y, modiff_target.pose.position.z, "wrist_2_link");
+//      check = check & arm_.setRPYTarget(0, 0, 3.14 /2, "wrist_2_link");
 
       if (check == false)
       {
@@ -231,6 +239,8 @@ ros::init(argc, argv, "jenga_robot");
 ros::NodeHandle nh;
 ros::Subscriber block_position;
 
+have_block = false;
+
 widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
 block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); //New
 
@@ -239,14 +249,21 @@ spinner.start();
 
 
 server.setGripper(0.031);
+
+while(! have_block )
+	ros::Duration(0.5).sleep();
+
+// move arm above block
+server.moveArmTo(block.pose, 0.15);
+
+// move arm down to block
+server.moveArmTo(block.pose, 0.05);
+
+
+server.setGripper(0.02);
 ros::Duration(0.8).sleep();
 
-server.moveArmTo(block.pose);
-server.setGripper(0.01);
-ros::Duration(0.8).sleep();
-
-while(1);
-
+//ros::waitForShutdown();
 
 spinner.stop();
 
