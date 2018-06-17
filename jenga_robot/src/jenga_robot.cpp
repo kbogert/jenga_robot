@@ -8,8 +8,6 @@
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/kinematic_constraints/utils.h>
 
-#include <moveit_simple_grasps/simple_grasps.h>
-#include <moveit_simple_grasps/grasp_data.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 
@@ -23,7 +21,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-geometry_msgs::PoseStamped block; //New
+geometry_msgs::PoseStamped block; 
 bool have_block;
 
 namespace widowx_block_manipulation
@@ -50,6 +48,7 @@ private:
   // Move groups to control arm and gripper with MoveIt!
   moveit::planning_interface::MoveGroupInterface arm_;
   moveit::planning_interface::MoveGroupInterface gripper_;
+  
 
   // Parameters from goal
   std::string arm_link;
@@ -103,7 +102,6 @@ public:
     
     arm_.setGoalPositionTolerance(0.05);
     arm_.setGoalOrientationTolerance(0.05);
-    //arm_.setGoalJointTolerance(0.05);
     
 
     // Allow replanning to increase the odds of a solution
@@ -123,8 +121,6 @@ public:
 
       modiff_target.pose.position.z += z_addition;
 
-
-//modiff_target.pose.position.z=0.61; //change**********************************
 
 modiff_target.pose.orientation.w=0;
 modiff_target.pose.orientation.x=0;
@@ -164,6 +160,7 @@ modiff_target.pose.orientation.z=0;
 //      modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
 
       ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, modiff_target.pose.position.z, d, rp, ry);
+     arm_.setStartState(*arm_.getCurrentState()); //New
      bool check = arm_.setPoseTarget(modiff_target, "wrist_2_link");
       
 //      bool check = arm_.setPositionTarget(modiff_target.pose.position.x, modiff_target.pose.position.y, modiff_target.pose.position.z, "wrist_2_link");
@@ -177,8 +174,10 @@ modiff_target.pose.orientation.z=0;
         as_.setAborted(result_);
         return false;
       }
+      
       moveit::planning_interface::MoveGroupInterface::Plan plan;
       arm_.plan(plan);
+      
       moveit::planning_interface::MoveItErrorCode result = arm_.execute(plan);
       if (bool(result) == true)
       {
@@ -239,13 +238,55 @@ ros::init(argc, argv, "jenga_robot");
 ros::NodeHandle nh;
 ros::Subscriber block_position;
 
+moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
+
+
 have_block = false;
 
 widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
-block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); //New
+block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); 
 
 ros::AsyncSpinner spinner(1);
 spinner.start();
+
+/************************************************************************************/
+while(! have_block )
+	ros::Duration(0.5).sleep();
+
+  /* Put an object into the scene*/
+
+  /* Define the object message */
+moveit_msgs::CollisionObject collision_object;
+  /* The TF frame */
+collision_object.header.frame_id = "/world";
+  /* The id of the object */
+collision_object.id = "box";
+
+  /* Make box at current pose of block */
+geometry_msgs::Pose currentBlockPose;
+currentBlockPose=block.pose;
+
+  /* Block definition */
+shape_msgs::SolidPrimitive primitive;
+primitive.type = primitive.BOX;
+primitive.dimensions.resize(3);  
+primitive.dimensions[0] = 0.015;
+primitive.dimensions[1] = 0.025;
+primitive.dimensions[2] = 0.075;
+
+collision_object.primitives.push_back(primitive);
+collision_object.primitive_poses.push_back(currentBlockPose);
+collision_object.operation=collision_object.ADD;
+
+std::vector<moveit_msgs::CollisionObject> collision_objects;  
+collision_objects.push_back(collision_object); 
+ 
+   /*Add object into world*/
+planning_scene_interface.addCollisionObjects(collision_objects);
+sleep(2.0);
+
+
+/*********************************************************************************/
 
 
 server.setGripper(0.031);
