@@ -100,13 +100,13 @@ public:
 
     // Allow some leeway in position (meters) and orientation (radians)
     
-    arm_.setGoalPositionTolerance(0.05);
-    arm_.setGoalOrientationTolerance(0.05);
+    arm_.setGoalPositionTolerance(0.01);
+    arm_.setGoalOrientationTolerance(0.01);
     
 
     // Allow replanning to increase the odds of a solution
-    arm_.allowReplanning(true);
-
+    arm_.allowReplanning(true); 
+    arm_.clearPoseTargets();
 
     int attempts = 0;
     ROS_INFO("[pick and place] Move arm to [%.2fx, %.2fy, %.2fz, %.2fyaw]",
@@ -160,7 +160,8 @@ modiff_target.pose.orientation.z=0;
 //      modiff_target.pose.position.z += std::abs(std::cos(rp))/50.0;
 
       ROS_INFO("Set pose target [%.2f, %.2f, %.2f] [d: %.2f, p: %.2f, y: %.2f]", x, y, modiff_target.pose.position.z, d, rp, ry);
-     arm_.setStartState(*arm_.getCurrentState()); //New
+
+     
      bool check = arm_.setPoseTarget(modiff_target, "wrist_2_link");
       
 //      bool check = arm_.setPositionTarget(modiff_target.pose.position.x, modiff_target.pose.position.y, modiff_target.pose.position.z, "wrist_2_link");
@@ -175,10 +176,13 @@ modiff_target.pose.orientation.z=0;
         return false;
       }
       
-      moveit::planning_interface::MoveGroupInterface::Plan plan;
-      arm_.plan(plan);
-      
-      moveit::planning_interface::MoveItErrorCode result = arm_.execute(plan);
+      //moveit::planning_interface::MoveGroupInterface::Plan plan;
+      //arm_.plan(plan);
+      //ros::Duration(7.0).sleep();//Added to give plan() enough time to complete
+     // moveit::planning_interface::MoveItErrorCode result = arm_.execute(plan);
+      moveit::planning_interface::MoveItErrorCode result = arm_.move();
+      ros::Duration(2.0).sleep();
+
       if (bool(result) == true)
       {
         return true;
@@ -190,6 +194,7 @@ modiff_target.pose.orientation.z=0;
       }
       attempts++;
     }
+   
 
     ROS_ERROR("[pick and place] Move to target failed after %d attempts", attempts);
     as_.setAborted(result_);
@@ -249,6 +254,7 @@ block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback);
 ros::AsyncSpinner spinner(1);
 spinner.start();
 
+
 /************************************************************************************/
 while(! have_block )
 	ros::Duration(0.5).sleep();
@@ -265,6 +271,7 @@ collision_object.id = "box";
   /* Make box at current pose of block */
 geometry_msgs::Pose currentBlockPose;
 currentBlockPose=block.pose;
+currentBlockPose.position.z+=.0005; //Added so block is not in collision with base
 
   /* Block definition */
 shape_msgs::SolidPrimitive primitive;
