@@ -1,0 +1,1 @@
+rosrun moveit_kinematics create_ikfast_moveit_plugin.py jenga_robot jenga_robot jenga_robot_ikfast_jenga_robot_plugin /home/will/widowx_arm/src/jenga_robot/jenga_robot_ikfast_plugin_updated/jenga_robot_ikfast_jenga_robot_plugin/src/jenga_robot_jenga_robot_ikfast_solver.cpp

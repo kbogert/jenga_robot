@@ -122,11 +122,12 @@ public:
       modiff_target.pose.position.z += z_addition;
 
 
-modiff_target.pose.orientation.w=0;
-modiff_target.pose.orientation.x=0;
-modiff_target.pose.orientation.y=-1;
-modiff_target.pose.orientation.z=0;
-
+	modiff_target.pose.orientation.w=0; //0
+	modiff_target.pose.orientation.x=0; //0
+	modiff_target.pose.orientation.y=-1; // -1 
+	modiff_target.pose.orientation.z=0;  //0
+	//modiff_target.pose.position.y=-0.1516; //mirror across x axis from block
+	
       double x = modiff_target.pose.position.x;
       double y = modiff_target.pose.position.y;
       double z = modiff_target.pose.position.z;
@@ -301,8 +302,11 @@ server.setGripper(0.031);
 while(! have_block )
 	ros::Duration(0.5).sleep();
 
+
+
+
 // move arm above block
-server.moveArmTo(block.pose, 0.15);
+server.moveArmTo(block.pose, 0.15); //0.15
 
 // move arm down to block
 server.moveArmTo(block.pose, 0.05);
@@ -311,7 +315,7 @@ server.moveArmTo(block.pose, 0.05);
 server.setGripper(0.02);
 ros::Duration(0.8).sleep();
 
-//ros::waitForShutdown();
+ros::waitForShutdown();
 
 spinner.stop();
 

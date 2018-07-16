@@ -14,11 +14,10 @@
 		<origin xyz="0.0 0.0 ${0.0254*0.25}" rpy="0.0 0.0 0.0"/>
 	</xacro:jenga_frame>
 
-
+<!--xyz="0.0 0.0 0.0"-->
 	<xacro:arm_turntable parent="frame_top_link" prefix="">
 		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
 	</xacro:arm_turntable>
-
 
 	<xacro:widowx_arm parent="arm_mount_link" prefix="">
 		<origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>

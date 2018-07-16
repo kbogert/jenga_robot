@@ -37,6 +37,16 @@
     <disable_collisions link1="build_platform_main_link" link2="shoulder_link" reason="Never" />
     <disable_collisions link1="build_platform_main_link" link2="turntable_main_link" reason="Never" />
     <disable_collisions link1="build_platform_main_link" link2="wrist_1_link" reason="Never" />
+
+	<!--disabling collisions between build platform and arm to test IKFast Plugin-->
+    <disable_collisions link1="build_platform_main_link" link2="wrist_2_link" reason="Change" />
+    <disable_collisions link1="build_platform_main_link" link2="gripper_rail_link" reason="Change" />
+    <disable_collisions link1="build_platform_main_link" link2="gripper_1_link" reason="Change" />
+    <disable_collisions link1="build_platform_main_link" link2="gripper_2_link" reason="Change" />
+
+
+
+
     <disable_collisions link1="forearm_link" link2="frame_main_link" reason="Never" />
     <disable_collisions link1="forearm_link" link2="gripper_1_link" reason="Never" />
     <disable_collisions link1="forearm_link" link2="gripper_2_link" reason="Never" />
