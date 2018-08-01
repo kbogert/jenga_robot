@@ -29,6 +29,7 @@
 <!--  <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="arm_controller turntable_controller joint_state_controller" respawn="false" output="screen"/> -->
   <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" args="arm_controller joint_state_controller gripper_controller turntable_controller" respawn="false" output="screen"/> 
 
+
   <!-- block spawner -->
   <node name="block_spawner" pkg="jenga_robot_gazebo" type="load_block.py" respawn="false" output="screen">
 
@@ -46,6 +47,7 @@
 
 	<param name="block_description" command="$(find xacro)/xacro '$(find jenga_robot_description)/urdf/block.urdf.xacro'"/>
   </node>
+
 
 </launch>
 
