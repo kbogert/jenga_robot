@@ -7,7 +7,6 @@
 #include <moveit/planning_interface/planning_interface.h>
 #include <moveit/planning_scene/planning_scene.h>
 #include <moveit/kinematic_constraints/utils.h>
-
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 
@@ -20,6 +19,8 @@
 #include <std_msgs/String.h>
 
 #include <boost/scoped_ptr.hpp>
+
+
 
 geometry_msgs::PoseStamped block; 
 bool have_block;
@@ -243,6 +244,18 @@ int main(int argc, char** argv)
 ros::init(argc, argv, "jenga_robot");
 ros::NodeHandle nh;
 ros::Subscriber block_position;
+
+/*
+//NEW Attach client
+ros::ServiceClient client = nh.serviceClient<gazebo_link_attacher::Attach>("/link_attacher_node/attach")
+gazebo_link_attacher::Attach req;
+req.request.model_name_1 = "gripper_rail"
+req.request.link_name_1 = "link"
+req.request.model_name_2 = "block1"
+req.request.link_name_2 = "link"
+client.call(req);
+*/
+
 
 moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
