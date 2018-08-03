@@ -20,7 +20,7 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include "gazebo_ros_link_attacher/gazebo_ros_link_attacher.h"
+//#include "gazebo_ros_link_attacher/gazebo_ros_link_attacher.h"
 #include "gazebo_ros_link_attacher/Attach.h"
 #include "gazebo_ros_link_attacher/AttachRequest.h"
 #include "gazebo_ros_link_attacher/AttachResponse.h"
@@ -253,12 +253,12 @@ ros::Subscriber block_position;
 
 
 //NEW Attach client
-ros::ServiceClient client = nh.serviceClient<gazebo_link_attacher::Attach>("/link_attacher_node/attach")
-gazebo_link_attacher::Attach req;
-req.request.model_name_1 = "gripper_rail"
-req.request.link_name_1 = "link"
-req.request.model_name_2 = "block1"
-req.request.link_name_2 = "link"
+ros::ServiceClient client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
+gazebo_ros_link_attacher::Attach req;
+req.request.model_name_1 = "gripper_rail";
+req.request.link_name_1 = "link";
+req.request.model_name_2 = "block1";
+req.request.link_name_2 = "link";
 client.call(req);
 
 
