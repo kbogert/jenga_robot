@@ -20,7 +20,6 @@
 
 #include <boost/scoped_ptr.hpp>
 
-//#include "gazebo_ros_link_attacher/gazebo_ros_link_attacher.h"
 #include "gazebo_ros_link_attacher/Attach.h"
 #include "gazebo_ros_link_attacher/AttachRequest.h"
 #include "gazebo_ros_link_attacher/AttachResponse.h"
@@ -252,16 +251,13 @@ ros::NodeHandle nh;
 ros::Subscriber block_position;
 
 
-//NEW Attach client
-ros::ServiceClient client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
+//Attach client
+ros::ServiceClient attach_client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
 gazebo_ros_link_attacher::Attach req;
-req.request.model_name_1 = "gripper_rail";
-req.request.link_name_1 = "link";
-req.request.model_name_2 = "block1";
-req.request.link_name_2 = "link";
-client.call(req);
 
-
+//Detach client
+ros::ServiceClient detach_client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/detach");
+gazebo_ros_link_attacher::Attach req1;
 
 moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
@@ -324,14 +320,51 @@ while(! have_block )
 
 
 
+
+//test attach link service 
+req.request.model_name_1 = "robot";
+req.request.link_name_1 = "gripper_2_link";
+req.request.model_name_2 = "block1";
+req.request.link_name_2 = "jenga_block_link";
+if (attach_client.call(req))
+  {
+    ROS_INFO("Successfully made attach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make attach request.");
+  }
+
+
+//test detach link service 
+req1.request.model_name_1 = "robot";
+req1.request.link_name_1 = "gripper_2_link";
+req1.request.model_name_2 = "block1";
+req1.request.link_name_2 = "jenga_block_link";
+if (detach_client.call(req1))
+  {
+    ROS_INFO("Successfully made detach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make detach request.");
+  }
+
 // move arm above block
-server.moveArmTo(block.pose, 0.15); //0.15
+server.moveArmTo(block.pose, 0.15); 
+ 
 
 // move arm down to block
 server.moveArmTo(block.pose, 0.05);
 
 
-server.setGripper(0.02);
+//server.setGripper(0.02);
+
+server.moveArmTo(block.pose, 0.3);
+
+
+
+
 ros::Duration(0.8).sleep();
 
 ros::waitForShutdown();
