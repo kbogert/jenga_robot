@@ -329,6 +329,17 @@ stack.pose.orientation.x=0;
 stack.pose.orientation.y=-1;
 stack.pose.orientation.z=0;
 
+//define stack_turned location
+geometry_msgs::PoseStamped stack_turned;
+stack_turned.header.frame_id = "/world"; 
+stack_turned.pose.position.x=0;
+stack_turned.pose.position.y=0;
+stack_turned.pose.position.z=0.3; //initial z position
+stack_turned.pose.orientation.w=0;
+stack_turned.pose.orientation.x=0.707;
+stack_turned.pose.orientation.y=-0.707;
+stack_turned.pose.orientation.z=0;
+
 
 
 have_block = false;
@@ -420,9 +431,9 @@ if (attach_client.call(req))
     ROS_ERROR("Failed to make attach request.");
   }
 
-//MOVE BLOCK TO SECOND POSITION IN STACK
-server.moveArmTo(stack.pose, 0.2);
-server.moveArmTo(stack.pose, 0.15);
+//MOVE BLOCK TO SECOND POSITION IN STACK AT 90 DEGREES
+server.moveArmTo(stack_turned.pose, 0.2);
+server.moveArmTo(stack_turned.pose, 0.15);
 
 //detach link 
 req1.request.model_name_1 = "robot";
