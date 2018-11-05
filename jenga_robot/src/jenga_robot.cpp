@@ -20,7 +20,6 @@
 
 #include <boost/scoped_ptr.hpp>
 
-//#include "gazebo_ros_link_attacher/gazebo_ros_link_attacher.h"
 #include "gazebo_ros_link_attacher/Attach.h"
 #include "gazebo_ros_link_attacher/AttachRequest.h"
 #include "gazebo_ros_link_attacher/AttachResponse.h"
@@ -29,7 +28,10 @@
 
 
 geometry_msgs::PoseStamped block; 
+geometry_msgs::PoseStamped adjusted_block;
 bool have_block;
+
+
 
 namespace widowx_block_manipulation
 {
@@ -83,7 +85,13 @@ public:
   static void callback(const geometry_msgs::PoseStamped& msg)
      { 
 	block=msg;
+	adjusted_block=msg;
 	have_block = true;
+	//adjusted for gripper positioning
+        adjusted_block.pose.orientation.w=0; //0
+	adjusted_block.pose.orientation.x=0; //0
+	adjusted_block.pose.orientation.y=-1; // -1 
+	adjusted_block.pose.orientation.z=0;  //0
      }
   void pickBlock(const std::string &object)
      {
@@ -129,12 +137,13 @@ public:
       modiff_target.pose.position.z += z_addition;
 
 
-	modiff_target.pose.orientation.w=0; //0
+	/*modiff_target.pose.orientation.w=0; //0
 	modiff_target.pose.orientation.x=0; //0
 	modiff_target.pose.orientation.y=-1; // -1 
 	modiff_target.pose.orientation.z=0;  //0
 	//modiff_target.pose.position.y=-0.1516; //mirror across x axis from block
-	
+	*/
+
       double x = modiff_target.pose.position.x;
       double y = modiff_target.pose.position.y;
       double z = modiff_target.pose.position.z;
@@ -245,37 +254,12 @@ public:
 };
 
 
-int main(int argc, char** argv)
+
+
+
+bool add_collision_block(const geometry_msgs::Pose& position, const std::string block_number)
 {
-ros::init(argc, argv, "jenga_robot");
-ros::NodeHandle nh;
-ros::Subscriber block_position;
-
-
-//NEW Attach client
-ros::ServiceClient client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
-gazebo_ros_link_attacher::Attach req;
-req.request.model_name_1 = "gripper_rail";
-req.request.link_name_1 = "link";
-req.request.model_name_2 = "block1";
-req.request.link_name_2 = "link";
-client.call(req);
-
-
-
 moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-
-
-have_block = false;
-
-widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
-block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); 
-
-ros::AsyncSpinner spinner(1);
-spinner.start();
-
-
-/************************************************************************************/
 while(! have_block )
 	ros::Duration(0.5).sleep();
 
@@ -286,11 +270,11 @@ moveit_msgs::CollisionObject collision_object;
   /* The TF frame */
 collision_object.header.frame_id = "/world";
   /* The id of the object */
-collision_object.id = "box";
+collision_object.id = block_number;
 
   /* Make box at current pose of block */
 geometry_msgs::Pose currentBlockPose;
-currentBlockPose=block.pose;
+currentBlockPose=position; //block.pose
 currentBlockPose.position.z+=.0005; //Added so block is not in collision with base
 
   /* Block definition */
@@ -309,9 +293,71 @@ std::vector<moveit_msgs::CollisionObject> collision_objects;
 collision_objects.push_back(collision_object); 
  
    /*Add object into world*/
+
 planning_scene_interface.addCollisionObjects(collision_objects);
 sleep(2.0);
 
+}
+
+
+
+
+int main(int argc, char** argv)
+{
+ros::init(argc, argv, "jenga_robot");
+ros::NodeHandle nh;
+ros::Subscriber block_position;
+
+
+
+//Attach client
+ros::ServiceClient attach_client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/attach");
+gazebo_ros_link_attacher::Attach req;
+
+//Detach client
+ros::ServiceClient detach_client = nh.serviceClient<gazebo_ros_link_attacher::Attach>("/link_attacher_node/detach");
+gazebo_ros_link_attacher::Attach req1;
+
+//define stack location
+geometry_msgs::PoseStamped stack;
+stack.header.frame_id = "/world"; 
+stack.pose.position.x=0;
+stack.pose.position.y=0;
+stack.pose.position.z=0.3; //initial z position
+stack.pose.orientation.w=0;
+stack.pose.orientation.x=0;
+stack.pose.orientation.y=-1;
+stack.pose.orientation.z=0;
+
+//define stack_turned location
+geometry_msgs::PoseStamped stack_turned;
+stack_turned.header.frame_id = "/world"; 
+stack_turned.pose.position.x=0;
+stack_turned.pose.position.y=0;
+stack_turned.pose.position.z=0.3; //initial z position
+stack_turned.pose.orientation.w=0;
+stack_turned.pose.orientation.x=0.707;
+stack_turned.pose.orientation.y=-0.707;
+stack_turned.pose.orientation.z=0;
+
+
+
+have_block = false;
+
+widowx_block_manipulation::PickAndPlaceServer server("pick_and_place");
+block_position = nh.subscribe("/game_msgs/new_blocks", 1000, server.callback); 
+
+ros::AsyncSpinner spinner(1);
+spinner.start();
+
+
+
+
+
+
+/************************************************************************************/
+
+add_collision_block(block.pose, "permanent_block");
 
 /*********************************************************************************/
 
@@ -323,15 +369,87 @@ while(! have_block )
 
 
 
-
+//PICK UP FIRST BLOCK
 // move arm above block
-server.moveArmTo(block.pose, 0.15); //0.15
-
+server.moveArmTo(adjusted_block.pose, 0.15); 
 // move arm down to block
-server.moveArmTo(block.pose, 0.05);
+server.moveArmTo(adjusted_block.pose, 0.1);
+
+//server.setGripper(0.02);
+
+// attach link  
+req.request.model_name_1 = "robot";
+req.request.link_name_1 = "gripper_2_link";
+req.request.model_name_2 = "block1";
+req.request.link_name_2 = "jenga_block_link";
+if (attach_client.call(req))
+  {
+    ROS_INFO("Successfully made attach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make attach request.");
+  }
+
+//MOVE BLOCK TO BOTTOM OF STACK
+server.moveArmTo(stack.pose, 0.15);
+server.moveArmTo(stack.pose, 0.1);
+
+//detach link 
+req1.request.model_name_1 = "robot";
+req1.request.link_name_1 = "gripper_2_link";
+req1.request.model_name_2 = "block1";
+req1.request.link_name_2 = "jenga_block_link";
+if (detach_client.call(req1))
+  {
+    ROS_INFO("Successfully made detach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make detach request.");
+  }
+
+//PICK UP SECOND BLOCK
+// move arm above block
+server.moveArmTo(adjusted_block.pose, 0.15); 
+// move arm down to block
+server.moveArmTo(adjusted_block.pose, 0.1);
+
+//server.setGripper(0.02);
+
+// attach link  
+req.request.model_name_1 = "robot";
+req.request.link_name_1 = "gripper_2_link";
+req.request.model_name_2 = "block2";
+req.request.link_name_2 = "jenga_block_link";
+if (attach_client.call(req))
+  {
+    ROS_INFO("Successfully made attach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make attach request.");
+  }
+
+//MOVE BLOCK TO SECOND POSITION IN STACK AT 90 DEGREES
+server.moveArmTo(stack_turned.pose, 0.2);
+server.moveArmTo(stack_turned.pose, 0.15);
+
+//detach link 
+req1.request.model_name_1 = "robot";
+req1.request.link_name_1 = "gripper_2_link";
+req1.request.model_name_2 = "block2";
+req1.request.link_name_2 = "jenga_block_link";
+if (detach_client.call(req1))
+  {
+    ROS_INFO("Successfully made detach request.");
+  }
+  else
+  {
+    ROS_ERROR("Failed to make detach request.");
+  }
 
 
-server.setGripper(0.02);
 ros::Duration(0.8).sleep();
 
 ros::waitForShutdown();
